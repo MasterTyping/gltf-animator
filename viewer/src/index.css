@@ -1,0 +1,14 @@
+/* 기본 브라우저 스타일을 초기화하여 모든 브라우저에서 동일하게 보이도록 합니다. */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* 스크롤바가 생기지 않도록 합니다. */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #e1e1e1;
+  /* 캔버스 배경과 일치시킵니다. */
+}
