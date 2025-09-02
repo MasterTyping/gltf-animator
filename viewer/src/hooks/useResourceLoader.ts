@@ -37,9 +37,7 @@ export function useResourceLoader(url: string) {
     throw new Error(`지원하지 않는 파일 형식입니다: ${extension || pureUrl}`);
   }
 
-  const data = useLoader(loader, pureUrl, (loader) => {
-    // 필요시 loader 커스터마이즈
-  });
+  const data = useLoader(loader, pureUrl, (loader) => {});
 
   const { animations, scene, materials } = data;
   return { animations, model: scene, materials };

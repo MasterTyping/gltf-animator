@@ -8,6 +8,14 @@ import React, {
 import { Box, CssBaseline, Typography, CircularProgress } from "@mui/material";
 import Scene from "../components/Scene";
 import { Canvas } from "@react-three/fiber";
+import { OrthographicCamera } from "@react-three/drei";
+import type { Vector3, Vector3Tuple } from "three";
+import { getMousePosition } from "../calc/mouse";
+
+type ModelInfo = {
+  url: string;
+  position: Vector3 | Vector3Tuple;
+};
 
 export default function HomePage() {
   // Map<id, url>
@@ -16,9 +24,9 @@ export default function HomePage() {
 
   useEffect(() => {
     // 이전 Map에서 사라진 Blob URL만 해제
-    prevFileUrlMap.current.forEach((url, id) => {
-      if (url.startsWith("blob:") && !fileUrlMap.has(id)) {
-        URL.revokeObjectURL(url);
+    prevFileUrlMap.current.forEach((info, id) => {
+      if (info.url.startsWith("blob:") && !fileUrlMap.has(id)) {
+        URL.revokeObjectURL(info.url);
       }
     });
     prevFileUrlMap.current = new Map(fileUrlMap);
@@ -26,6 +34,7 @@ export default function HomePage() {
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+
     const files = event.dataTransfer.files;
     const newEntries: [string, string][] = [];
     for (let i = 0; i < files.length; i++) {
@@ -71,7 +80,6 @@ export default function HomePage() {
         >
           <Suspense fallback={null}>
             <Canvas
-              camera={{ position: [5, 5, 5], fov: 50 }}
               shadows
               dpr={[1, 2]}
               gl={{
@@ -79,6 +87,15 @@ export default function HomePage() {
                 powerPreference: "high-performance",
               }}
             >
+              <OrthographicCamera
+                makeDefault
+                up={[0, 0, 1]}
+                zoom={0.3}
+                position={[0, 0, 30000]}
+                near={0.01}
+                far={100000}
+                onUpdate={(camera) => camera.updateProjectionMatrix()}
+              />
               <Scene fileUrlMap={fileUrlMap} />
             </Canvas>
           </Suspense>
