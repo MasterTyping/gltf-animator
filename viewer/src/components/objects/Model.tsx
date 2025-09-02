@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use, useEffect } from "react";
 import { useResourceLoader } from "../../hooks/useResourceLoader";
 
 interface ModelProps {
@@ -6,7 +6,16 @@ interface ModelProps {
 }
 
 export default function Model({ url }: ModelProps) {
-  const { model } = useResourceLoader(url);
+  const { model, animations, materials } = useResourceLoader(url);
   if (!model) return null;
+
+  useEffect(() => {
+    if (model) {
+      console.log("Model loaded:", model);
+      console.log("Animations:", animations);
+      console.log("Materials:", materials);
+    }
+  }, [model, animations, materials]);
+
   return <primitive object={model} />;
 }
