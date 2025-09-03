@@ -3,6 +3,7 @@ import Model from "../components/objects/Model";
 import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 import { useSceneStore } from "../store";
+import * as THREE from "three";
 
 interface SceneProps {
   fileUrlMap: Map<string, string>;
@@ -14,7 +15,7 @@ interface SceneProps {
 export default function Scene({ fileUrlMap, name = "root" }: SceneProps) {
   // setScene(model.parent); // 또는 필요한 정보만 저장
 
-  const { scene } = useThree();
+  const { scene, camera, gl } = useThree();
   const setScene = useSceneStore((state) => state.setScene);
 
   useEffect(() => {
@@ -34,7 +35,18 @@ export default function Scene({ fileUrlMap, name = "root" }: SceneProps) {
           <Model key={id} url={url} />
         ))}
 
-      <OrbitControls />
+      <OrbitControls
+        camera={camera}
+        makeDefault={true}
+        minZoom={0.03}
+        enableDamping={false}
+        domElement={gl.domElement}
+        mouseButtons={{
+          LEFT: THREE.MOUSE.PAN,
+          MIDDLE: THREE.MOUSE.ROTATE,
+          RIGHT: THREE.MOUSE.PAN,
+        }}
+      />
     </>
   );
 }

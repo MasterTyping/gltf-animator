@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import * as THREE from "three";
+import { createAnimationActions } from "./action/animation";
 
 // 씬의 전체 상태를 나타내는 인터페이스입니다.
 // 이제 씬에 있는 모든 객체와 현재 선택된 객체의 ID를 포함합니다.
@@ -7,6 +8,14 @@ export interface SceneState {
   objects: { [uuid: string]: THREE.Object3D }; // UUID를 키로 객체를 저장하여 검색 성능 향상
   selectedUUID: string[];
   root?: THREE.Scene;
+  animation?: {
+    [uuid: string]: {
+      clips: THREE.AnimationClip[];
+      currentClip: number;
+      isPlaying: boolean;
+      time: number;
+    };
+  };
   // 향후 색상, 환경 설정 등 더 많은 상태를 추가할 수 있습니다.
 }
 
@@ -40,7 +49,7 @@ interface StoreState {
 // 히스토리의 초기 상태
 const initialState: History = {
   past: [],
-  present: { objects: {}, selectedUUID: [] },
+  present: { objects: {}, selectedUUID: [], animation: {} },
   future: [],
 };
 
@@ -50,6 +59,7 @@ const initialState: History = {
  */
 export const useSceneStore = create<StoreState>((set, get) => ({
   history: initialState,
+  ...createAnimationActions(set, get),
 
   // --- 상태 변경 액션들 (새로운 히스토리 생성) ---
 

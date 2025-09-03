@@ -13,6 +13,7 @@ import HierarchyPanel from "../components/interface/HierarchyPanel";
 import { useSceneStore } from "../store";
 import Inspector from "../components/interface/Inspector";
 import type { WebGLRenderer } from "three";
+import AnimationTimeline from "../components/interface/AnimationViewer";
 
 export default function HomePage() {
   // Map<id, url>
@@ -136,6 +137,7 @@ export default function HomePage() {
             </Canvas>
           </Suspense>
         </Suspense>
+        {/* <AnimationTimeline></AnimationTimeline> */}
         {fileUrlMap.size === 0 && (
           <Box
             sx={{
