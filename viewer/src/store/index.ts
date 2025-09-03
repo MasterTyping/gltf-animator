@@ -6,6 +6,7 @@ import * as THREE from "three";
 export interface SceneState {
   objects: { [uuid: string]: THREE.Object3D }; // UUID를 키로 객체를 저장하여 검색 성능 향상
   selectedUUID: string[];
+  root?: THREE.Scene;
   // 향후 색상, 환경 설정 등 더 많은 상태를 추가할 수 있습니다.
 }
 
@@ -63,7 +64,7 @@ export const useSceneStore = create<StoreState>((set, get) => ({
     set((state) => ({
       history: {
         past: [...state.history.past, state.history.present],
-        present: { objects: newObjects, selectedUUID: [] },
+        present: { objects: newObjects, selectedUUID: [], root: gltfScene },
         future: [],
       },
     }));
@@ -141,8 +142,42 @@ export const useSceneStore = create<StoreState>((set, get) => ({
 
   selectObject: (uuid) => {
     set((state) => {
-      if (state.history.present.selectedUUID[0] === uuid) return state;
+      // If uuid is null, clear selection
+      if (uuid === null) {
+        if (state.history.present.selectedUUID.length === 0) return state;
+        return {
+          history: {
+            past: [...state.history.past, state.history.present],
+            present: { ...state.history.present, selectedUUID: [] },
+            future: [],
+          },
+        };
+      }
 
+      // If uuid is an array, set selection to that array
+      if (Array.isArray(uuid)) {
+        if (
+          state.history.present.selectedUUID.length === uuid.length &&
+          state.history.present.selectedUUID.every((id, i) => id === uuid[i])
+        ) {
+          return state;
+        }
+        return {
+          history: {
+            past: [...state.history.past, state.history.present],
+            present: { ...state.history.present, selectedUUID: uuid },
+            future: [],
+          },
+        };
+      }
+
+      // Otherwise, set selection to single uuid
+      if (
+        state.history.present.selectedUUID.length === 1 &&
+        state.history.present.selectedUUID[0] === uuid
+      ) {
+        return state;
+      }
       return {
         history: {
           past: [...state.history.past, state.history.present],

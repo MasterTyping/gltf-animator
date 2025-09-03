@@ -1,76 +1,109 @@
 import React from "react";
-import {
-  Box,
-  Paper,
-  Typography,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
-import { useAnimations } from "@react-three/drei";
+import { useSceneStore } from "../../store";
+import * as THREE from "three";
 
-/**
- * 선택된 객체의 정보를 표시하는 UI 패널입니다.
- */
-export default function InspectorPanel() {
-  // Zustand 스토어에서 선택된 객체 상태를 가져옵니다.
+// Simple right-side drawer styles
+const drawerStyle: React.CSSProperties = {
+  position: "fixed",
+  top: 0,
+  right: 0,
+  height: "100vh",
+  width: 340,
+  background: "rgba(30, 32, 36, 0.98)",
+  color: "#fff",
+  boxShadow: "-2px 0 16px rgba(0,0,0,0.18)",
+  zIndex: 1000,
+  padding: "32px 24px",
+  display: "flex",
+  flexDirection: "column",
+  transition: "transform 0.3s cubic-bezier(.4,0,.2,1)",
+  fontFamily: "Inter, Arial, sans-serif",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontWeight: 600,
+  color: "#b3b8c3",
+  fontSize: 13,
+  marginBottom: 2,
+};
+
+const valueStyle: React.CSSProperties = {
+  fontWeight: 400,
+  color: "#fff",
+  fontSize: 15,
+  marginBottom: 16,
+  wordBreak: "break-all",
+};
+
+export default function Inspector() {
+  const selectedUUID = useSceneStore(
+    (state) => state.history.present.selectedUUID
+  );
+  const objects = useSceneStore((state) => state.history.present.objects);
+
+  // Only show inspector if something is selected
+  if (!selectedUUID || selectedUUID.length === 0) {
+    return (
+      <div style={drawerStyle}>
+        <div style={{ color: "#b3b8c3", fontSize: 16 }}>No object selected</div>
+      </div>
+    );
+  }
+
+  const object = objects[selectedUUID[0]] as THREE.Object3D | undefined;
+
+  if (!object) {
+    return (
+      <div style={drawerStyle}>
+        <div style={{ color: "#b3b8c3", fontSize: 16 }}>
+          Selected object not found
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Paper
-      elevation={4}
-      sx={{
-        position: "absolute",
-        top: 16,
-        right: 16,
-        width: 300,
-        maxHeight: "calc(100vh - 32px)",
-        overflowY: "auto",
-        backgroundColor: "rgba(40, 40, 40, 0.9)",
-        color: "white",
-        backdropFilter: "blur(10px)",
-      }}
-    >
-      <Box sx={{ padding: "16px" }}>
-        <Typography variant="h6">Inspector</Typography>
-        <Divider sx={{ my: 1, borderColor: "rgba(255, 255, 255, 0.2)" }} />
-        {selectedUUID ? (
-          <List dense>
-            <ListItem>
-              <ListItemText
-                primary="Name"
-                secondary={selectedUUID.name || "Unnamed"}
-                secondaryTypographyProps={{ color: "inherit" }}
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="Type"
-                secondary={selectedUUID.type}
-                secondaryTypographyProps={{ color: "inherit" }}
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="UUID"
-                secondary={selectedUUID.uuid}
-                sx={{
-                  "& .MuiListItemSecondary-root": {
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  },
-                }}
-                secondaryTypographyProps={{ color: "inherit" }}
-              />
-            </ListItem>
-          </List>
-        ) : (
-          <Typography variant="body2" sx={{ color: "grey.400", mt: 1 }}>
-            No object selected.
-          </Typography>
-        )}
-      </Box>
-    </Paper>
+    <aside style={drawerStyle}>
+      <h2
+        style={{
+          margin: 0,
+          marginBottom: 28,
+          fontWeight: 700,
+          fontSize: 22,
+          letterSpacing: 0.2,
+        }}
+      >
+        Inspector
+      </h2>
+      <div>
+        <div style={labelStyle}>Name</div>
+        <div style={valueStyle}>{object.name || "(unnamed)"}</div>
+      </div>
+      <div>
+        <div style={labelStyle}>UUID</div>
+        <div style={valueStyle}>{object.uuid}</div>
+      </div>
+      <div>
+        <div style={labelStyle}>Position</div>
+        <div style={valueStyle}>
+          {object.position.x.toFixed(2)}, {object.position.y.toFixed(2)},{" "}
+          {object.position.z.toFixed(2)}
+        </div>
+      </div>
+      <div>
+        <div style={labelStyle}>Rotation</div>
+        <div style={valueStyle}>
+          {object.rotation.x.toFixed(2)}, {object.rotation.y.toFixed(2)},{" "}
+          {object.rotation.z.toFixed(2)}
+        </div>
+      </div>
+      <div>
+        <div style={labelStyle}>Scale</div>
+        <div style={valueStyle}>
+          {object.scale.x.toFixed(2)}, {object.scale.y.toFixed(2)},{" "}
+          {object.scale.z.toFixed(2)}
+        </div>
+      </div>
+    </aside>
   );
 }

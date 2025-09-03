@@ -9,24 +9,23 @@ import { Box, CssBaseline, Typography, CircularProgress } from "@mui/material";
 import Scene from "../components/Scene";
 import { Canvas } from "@react-three/fiber";
 import { OrthographicCamera } from "@react-three/drei";
-import type { Vector3, Vector3Tuple } from "three";
-import { getMousePosition } from "../calc/mouse";
-
-type ModelInfo = {
-  url: string;
-  position: Vector3 | Vector3Tuple;
-};
+import HierarchyPanel from "../components/interface/HierarchyPanel";
+import { useSceneStore } from "../store";
+import Inspector from "../components/interface/Inspector";
 
 export default function HomePage() {
   // Map<id, url>
   const [fileUrlMap, setFileUrlMap] = useState<Map<string, string>>(new Map());
   const prevFileUrlMap = useRef<Map<string, string>>(new Map());
+  const selectedUUID = useSceneStore(
+    (state) => state.history.present.selectedUUID
+  );
 
   useEffect(() => {
     // 이전 Map에서 사라진 Blob URL만 해제
-    prevFileUrlMap.current.forEach((info, id) => {
-      if (info.url.startsWith("blob:") && !fileUrlMap.has(id)) {
-        URL.revokeObjectURL(info.url);
+    prevFileUrlMap.current.forEach((url, id) => {
+      if (url.startsWith("blob:") && !fileUrlMap.has(id)) {
+        URL.revokeObjectURL(url);
       }
     });
     prevFileUrlMap.current = new Map(fileUrlMap);
@@ -62,6 +61,9 @@ export default function HomePage() {
       onDrop={handleDrop}
     >
       <CssBaseline />
+
+      <HierarchyPanel></HierarchyPanel>
+      {selectedUUID.length > 0 && <Inspector />}
       <Box component="main" sx={{ flexGrow: 1, position: "relative" }}>
         <Suspense
           fallback={
