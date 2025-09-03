@@ -3,8 +3,12 @@ import { useSceneStore } from "../../store";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import CubeIcon from "@mui/icons-material/ViewInAr";
-import ExpandLess from "@mui/icons-material/ExpandLess";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import HighlightIcon from "@mui/icons-material/Highlight";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
+import ColorLensIcon from "@mui/icons-material/ColorLens";
 import { Object3D, Scene } from "three";
 
 import {
@@ -21,26 +25,26 @@ import {
 
 interface HierarchyNodeProps {
   object: Object3D;
-  selected: boolean;
   onSelect: (uuid: string) => void;
   level?: number;
 }
 
 const HierarchyNode: React.FC<HierarchyNodeProps> = ({
   object,
-  selected,
   onSelect,
   level = 0,
 }) => {
   const [open, setOpen] = React.useState(level === 0); // root open by default
 
-  // Only show children that are in the store (filtered by uuid)
-  const children = useMemo(
-    () =>
-      object.children.filter(
-        (child) => child.type !== "Bone" && child.visible !== false
-      ),
-    [object.children]
+  // selectedUUID을 스토어에서 직접 읽어서 각 노드가 스스로 선택 여부 판단
+  const selectedUUID = useSceneStore((s) => s.history.present.selectedUUID);
+  const isSelected = Array.isArray(selectedUUID)
+    ? selectedUUID.includes(object.uuid)
+    : selectedUUID === object.uuid;
+
+  // children을 직접 계산 (useMemo 제거 -> three.js가 children 배열을 내부적으로 변경해도 항상 최신 상태 사용)
+  const children = object.children.filter(
+    (child) => child.type !== "Bone" && child.visible !== false
   );
 
   return (
@@ -49,7 +53,7 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
         disablePadding
         sx={{
           pl: 2 + level * 2,
-          bgcolor: selected ? "action.selected" : undefined,
+          bgcolor: isSelected ? "action.selected" : undefined,
         }}
         secondaryAction={
           children.length > 0 ? (
@@ -60,20 +64,30 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
                 setOpen((prev) => !prev);
               }}
             >
-              {open ? <ExpandLess /> : <ExpandMore />}
+              {open ? <ExpandMore /> : <NavigateBeforeIcon />}
             </ListItemButton>
           ) : null
         }
       >
         <ListItemButton
-          selected={selected}
+          selected={isSelected}
           onClick={() => onSelect(object.uuid)}
         >
           <ListItemIcon>
             {object.type === "Scene" || object.type === "Group" ? (
               <FolderIcon fontSize="small" />
-            ) : (
+            ) : object.type === "Object3D" ||
+              object.type === "Mesh" ||
+              object.type.includes("Geometry") ? (
               <CubeIcon fontSize="small" />
+            ) : object.type.includes("Light") ? (
+              <HighlightIcon fontSize="small" />
+            ) : object.type.includes("Camera") ? (
+              <VideocamIcon fontSize="small" />
+            ) : object.type.includes("Material") ? (
+              <ColorLensIcon fontSize="small" />
+            ) : (
+              <QuestionMarkIcon fontSize="small" />
             )}
           </ListItemIcon>
           <ListItemText
@@ -90,7 +104,6 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
               <HierarchyNode
                 key={child.uuid}
                 object={child}
-                selected={selected && child.uuid === object.uuid}
                 onSelect={onSelect}
                 level={level + 1}
               />
@@ -104,7 +117,6 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
 
 export const HierarchyPanel: React.FC = () => {
   const root = useSceneStore((s) => s.history.present.root);
-  const selectedUUID = useSceneStore((s) => s.history.present.selectedUUID);
   const selectObject = useSceneStore((s) => s.selectObject);
 
   return (
@@ -126,11 +138,7 @@ export const HierarchyPanel: React.FC = () => {
             Hierarchy
           </Typography>
           <List dense disablePadding>
-            <HierarchyNode
-              object={root}
-              selected={selectedUUID.includes(root.uuid)}
-              onSelect={selectObject}
-            />
+            <HierarchyNode object={root} onSelect={selectObject} />
           </List>
         </>
       )}

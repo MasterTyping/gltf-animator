@@ -77,7 +77,9 @@ export default function Inspector() {
       </h2>
       <div>
         <div style={labelStyle}>Name</div>
-        <div style={valueStyle}>{object.name || "(unnamed)"}</div>
+        <div style={valueStyle}>
+          {object.name || object.type || "(unnamed)"}
+        </div>
       </div>
       <div>
         <div style={labelStyle}>UUID</div>

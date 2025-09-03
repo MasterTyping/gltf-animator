@@ -12,6 +12,7 @@ import { OrthographicCamera } from "@react-three/drei";
 import HierarchyPanel from "../components/interface/HierarchyPanel";
 import { useSceneStore } from "../store";
 import Inspector from "../components/interface/Inspector";
+import type { WebGLRenderer } from "three";
 
 export default function HomePage() {
   // Map<id, url>
@@ -20,6 +21,39 @@ export default function HomePage() {
   const selectedUUID = useSceneStore(
     (state) => state.history.present.selectedUUID
   );
+
+  // ref to the GL renderer so we can force context loss on unmount
+  const glRef = useRef<WebGLRenderer | null>(null);
+
+  useEffect(() => {
+    const cleanup = () => {
+      prevFileUrlMap.current.forEach((url) => {
+        if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
+      });
+      // force context loss + dispose
+      const gl = glRef.current;
+      if (gl) {
+        try {
+          const ext = gl.getContext()?.getExtension("WEBGL_lose_context");
+          if (ext) ext.loseContext();
+        } catch {}
+        try {
+          // three.js WebGLRenderer provides forceContextLoss() in many builds
+          // @ts-ignore
+          if (typeof gl.forceContextLoss === "function") gl.forceContextLoss();
+        } catch {}
+        try {
+          gl.dispose?.();
+        } catch {}
+      }
+    };
+
+    window.addEventListener("beforeunload", cleanup);
+    return () => {
+      cleanup();
+      window.removeEventListener("beforeunload", cleanup);
+    };
+  }, []);
 
   useEffect(() => {
     // 이전 Map에서 사라진 Blob URL만 해제
