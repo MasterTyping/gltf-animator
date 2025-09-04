@@ -14,6 +14,7 @@ import { useSceneStore } from "../store";
 import Inspector from "../components/interface/Inspector";
 import type { WebGLRenderer } from "three";
 import AnimationTimeline from "../components/interface/AnimationViewer";
+import ClickControls from "../components/controls/clickControls";
 
 export default function HomePage() {
   // Map<id, url>
@@ -96,7 +97,6 @@ export default function HomePage() {
       onDrop={handleDrop}
     >
       <CssBaseline />
-
       <HierarchyPanel></HierarchyPanel>
       {selectedUUID.length > 0 && <Inspector />}
       <Box component="main" sx={{ flexGrow: 1, position: "relative" }}>
@@ -137,7 +137,6 @@ export default function HomePage() {
             </Canvas>
           </Suspense>
         </Suspense>
-        {/* <AnimationTimeline></AnimationTimeline> */}
         {fileUrlMap.size === 0 && (
           <Box
             sx={{

@@ -4,6 +4,7 @@ import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 import { useSceneStore } from "../store";
 import * as THREE from "three";
+import PivotManager from "./gizmo/PivotManager";
 
 interface SceneProps {
   fileUrlMap: Map<string, string>;
@@ -20,7 +21,6 @@ export default function Scene({ fileUrlMap, name = "root" }: SceneProps) {
 
   useEffect(() => {
     if (scene) {
-      console.log(scene);
       setScene(scene);
     }
   }, [scene]);
@@ -29,12 +29,11 @@ export default function Scene({ fileUrlMap, name = "root" }: SceneProps) {
     <>
       <ambientLight intensity={1.5} />
       <directionalLight position={[10, 10, 5]} intensity={2.5} />
-
+      <PivotManager />
       {fileUrlMap.size &&
         [...fileUrlMap.entries()].map(([id, url]) => (
           <Model key={id} url={url} />
         ))}
-
       <OrbitControls
         camera={camera}
         makeDefault={true}

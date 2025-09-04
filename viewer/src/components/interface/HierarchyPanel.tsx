@@ -71,7 +71,11 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
       >
         <ListItemButton
           selected={isSelected}
-          onClick={() => onSelect(object.uuid)}
+          onClick={() =>
+            onSelect
+              ? onSelect(object.uuid)
+              : console.warn("onSelect is undefined")
+          }
         >
           <ListItemIcon>
             {object.type === "Scene" || object.type === "Group" ? (
