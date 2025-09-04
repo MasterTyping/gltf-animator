@@ -13,8 +13,6 @@ import HierarchyPanel from "../components/interface/HierarchyPanel";
 import { useSceneStore } from "../store";
 import Inspector from "../components/interface/Inspector";
 import type { WebGLRenderer } from "three";
-import AnimationTimeline from "../components/interface/AnimationViewer";
-import ClickControls from "../components/controls/clickControls";
 
 export default function HomePage() {
   // Map<id, url>
@@ -90,6 +88,44 @@ export default function HomePage() {
     }
   }, []);
 
+  const handleClickUpload = useCallback((event?: React.MouseEvent) => {
+    if (event) event.preventDefault();
+
+    const handleFiles = (files: FileList | null) => {
+      if (!files) return;
+      const newEntries: [string, string][] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.name.endsWith(".gltf") || file.name.endsWith(".glb")) {
+          const url =
+            URL.createObjectURL(file) +
+            "?name=" +
+            encodeURIComponent(file.name);
+          const id = crypto.randomUUID();
+          newEntries.push([id, url]);
+        }
+      }
+      if (newEntries.length > 0) {
+        setFileUrlMap((prev) => {
+          const next = new Map(prev);
+          newEntries.forEach(([id, url]) => next.set(id, url));
+          return next;
+        });
+      }
+    };
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".gltf,.glb,model/gltf-binary,model/gltf+json";
+    input.multiple = true;
+    input.onchange = () => {
+      handleFiles(input.files);
+      // help GC
+      input.onchange = null;
+    };
+    input.click();
+  }, []);
+
   return (
     <Box
       sx={{ display: "flex", flexDirection: "column", height: "100vh" }}
@@ -145,13 +181,16 @@ export default function HomePage() {
               left: "50%",
               transform: "translate(-50%, -50%)",
               color: "white",
-              pointerEvents: "none",
               backgroundColor: "rgba(0,0,0,0.5)",
               padding: "1rem",
               borderRadius: "8px",
+              zIndex: 10,
             }}
+            onClick={handleClickUpload}
           >
-            <Typography variant="h5">Drop GLTF / GLB file here</Typography>
+            <Typography variant="h5">
+              Drag & Drop GLTF / GLB file here
+            </Typography>
           </Box>
         )}
       </Box>

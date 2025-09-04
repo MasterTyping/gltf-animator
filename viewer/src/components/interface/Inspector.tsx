@@ -1,6 +1,8 @@
 import React from "react";
 import { useSceneStore } from "../../store";
 import * as THREE from "three";
+import AnimationInfo from "./AnimationInfo";
+import { TextField } from "@mui/material";
 
 // Simple right-side drawer styles
 const drawerStyle: React.CSSProperties = {
@@ -84,27 +86,100 @@ export default function Inspector() {
       <div>
         <div style={labelStyle}>UUID</div>
         <div style={valueStyle}>{object.uuid}</div>
-      </div>
-      <div>
-        <div style={labelStyle}>Position</div>
-        <div style={valueStyle}>
-          {object.position.x.toFixed(2)}, {object.position.y.toFixed(2)},{" "}
-          {object.position.z.toFixed(2)}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div>
+            {object.position.toArray().map((v, i) => (
+              <TextField
+                key={i}
+                label={`${["X", "Y", "Z"][i]}`}
+                value={v.toFixed(2)}
+                size="small"
+                variant="filled"
+                sx={{
+                  "& .MuiInputLabel-root": {
+                    color: "#fff",
+                  },
+                  "& .MuiFilledInput-root": {
+                    backgroundColor: "transparent",
+                    color: "#fff",
+                  },
+                  "& .MuiInputBase-input": { color: "#fff" },
+                  minWidth: 80,
+                }}
+                onChange={(e) => {
+                  const newValue = parseFloat(e.target.value);
+                  if (!isNaN(newValue)) {
+                    object.position.setComponent(i, newValue);
+                  }
+                }}
+              />
+            ))}
+          </div>
+          <div>
+            {object.rotation
+              .toArray()
+              .slice(0, 3)
+              .map((v, i) => (
+                <TextField
+                  key={i}
+                  label={`${["rx", "ry", "rz"][i]}`}
+                  value={v.toFixed(2)}
+                  size="small"
+                  variant="filled"
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "#fff",
+                    },
+                    "& .MuiFilledInput-root": {
+                      backgroundColor: "transparent",
+                      color: "#fff",
+                    },
+                    "& .MuiInputBase-input": { color: "#fff" },
+                    minWidth: 80,
+                  }}
+                  onChange={(e) => {
+                    const newValue = parseFloat(e.target.value);
+                    if (!isNaN(newValue)) {
+                      object.rotation.setComponent(i, newValue);
+                    }
+                  }}
+                />
+              ))}
+          </div>
+          <div>
+            {object.scale
+              .toArray()
+              .slice(0, 3)
+              .map((v, i) => (
+                <TextField
+                  key={i}
+                  label={`${["sx", "sy", "sz"][i]}`}
+                  value={v.toFixed(2)}
+                  size="small"
+                  variant="filled"
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "#fff",
+                    },
+                    "& .MuiFilledInput-root": {
+                      backgroundColor: "transparent",
+                      color: "#fff",
+                    },
+                    "& .MuiInputBase-input": { color: "#fff" },
+                    minWidth: 80,
+                  }}
+                  onChange={(e) => {
+                    const newValue = parseFloat(e.target.value);
+                    if (!isNaN(newValue)) {
+                      object.scale.setComponent(i, newValue);
+                    }
+                  }}
+                />
+              ))}
+          </div>
         </div>
-      </div>
-      <div>
-        <div style={labelStyle}>Rotation</div>
-        <div style={valueStyle}>
-          {object.rotation.x.toFixed(2)}, {object.rotation.y.toFixed(2)},{" "}
-          {object.rotation.z.toFixed(2)}
-        </div>
-      </div>
-      <div>
-        <div style={labelStyle}>Scale</div>
-        <div style={valueStyle}>
-          {object.scale.x.toFixed(2)}, {object.scale.y.toFixed(2)},{" "}
-          {object.scale.z.toFixed(2)}
-        </div>
+
+        <AnimationInfo selectedObject={object} />
       </div>
     </aside>
   );

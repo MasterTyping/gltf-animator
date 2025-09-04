@@ -30,14 +30,14 @@ export default function Model({ url }: ModelProps) {
     }
   }, [memoizedModel, animations]);
 
-  useEffect(() => {
-    if (mixer && clips.length > 0) {
-      const current = 0;
-      const action = mixer.clipAction(clips[current]);
-      // action.setLoop(LoopRepeat, 1); // 루프 제한으로 성능 최적화
-      action.play();
-    }
-  }, [mixer, clips]); // 의존성 최소화
+  // useEffect(() => {
+  //   if (mixer && clips.length > 0) {
+  //     const current = 0;
+  //     const action = mixer.clipAction(clips[current]);
+  //     // action.setLoop(LoopRepeat, 1); // 루프 제한으로 성능 최적화
+  //     action.play();
+  //   }
+  // }, [mixer, clips]); // 의존성 최소화
 
   // 메모리 해제 (컴포넌트 언마운트 시)
   useEffect(() => {
