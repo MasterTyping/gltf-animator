@@ -134,7 +134,7 @@ export default function HomePage() {
     >
       <CssBaseline />
       <HierarchyPanel></HierarchyPanel>
-      {selectedUUID.length > 0 && <Inspector />}
+      {selectedUUID?.length > 0 && <Inspector />}
       <Box component="main" sx={{ flexGrow: 1, position: "relative" }}>
         <Suspense
           fallback={

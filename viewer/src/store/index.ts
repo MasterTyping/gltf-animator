@@ -1,6 +1,15 @@
 import { create } from "zustand";
 import * as THREE from "three";
 import { createAnimationActions } from "./action/animation";
+import { produce } from "immer";
+
+export interface KeyFrame {
+  time: number; // 시간 (초)
+  position: [number, number, number]; // 위치
+  quaternion: [number, number, number, number]; // 회전 (쿼터니언)
+  color?: string | number; // 선택적 색상
+  scale?: [number, number, number]; // 선택적 크기
+}
 
 // 씬의 전체 상태를 나타내는 인터페이스입니다.
 // 이제 씬에 있는 모든 객체와 현재 선택된 객체의 ID를 포함합니다.
@@ -16,6 +25,13 @@ export interface SceneState {
       time: number;
     };
   };
+  currentTime: number;
+  keyframes: Map<
+    string,
+    {
+      [bone: string]: KeyFrame[];
+    }
+  >;
   // 향후 색상, 환경 설정 등 더 많은 상태를 추가할 수 있습니다.
 }
 
@@ -31,14 +47,6 @@ interface StoreState {
   history: History;
   // 액션: 씬의 상태를 변경하는 모든 동작들
   setScene: (gltfScene: THREE.Scene) => void;
-  addObject: (object: THREE.Object3D) => void;
-  removeObject: (uuid: string[] | string) => void;
-  updateObject: (
-    uuid: string,
-    newPosition: THREE.Vector3,
-    newRotation: THREE.Euler,
-    newScale: THREE.Vector3
-  ) => void;
   selectObject: (uuid: string[] | string | null) => void;
   // 히스토리 제어 액션
   undo: () => void;
@@ -49,7 +57,13 @@ interface StoreState {
 // 히스토리의 초기 상태
 const initialState: History = {
   past: [],
-  present: { objects: {}, selectedUUID: [], animation: {} },
+  present: {
+    objects: {},
+    selectedUUID: [],
+    animation: {},
+    currentTime: 0,
+    keyframes: new Map(),
+  },
   future: [],
 };
 
@@ -59,145 +73,35 @@ const initialState: History = {
  */
 export const useSceneStore = create<StoreState>((set, get) => ({
   history: initialState,
-  ...createAnimationActions(set, get),
 
-  // --- 상태 변경 액션들 (새로운 히스토리 생성) ---
-
-  // 새로운 GLTF/GLB 파일이 로드되었을 때 씬 전체를 설정합니다.
-  setScene: (gltfScene) => {
-    const newObjects: { [uuid: string]: THREE.Object3D } = {};
-    gltfScene.traverse((child) => {
-      // 복제하여 원본과의 참조를 끊습니다.
-      newObjects[child.uuid] = child.clone();
-    });
-
-    set((state) => ({
-      history: {
-        past: [...state.history.past, state.history.present],
-        present: { objects: newObjects, selectedUUID: [], root: gltfScene },
-        future: [],
-      },
-    }));
-  },
-
-  addObject: (object) => {
-    const newObject = object.clone(); // 안전을 위해 복제
-    set((state) => {
-      const newObjects = {
-        ...state.history.present.objects,
-        [newObject.uuid]: newObject,
-      };
-      return {
-        history: {
-          past: [...state.history.past, state.history.present],
-          present: { ...state.history.present, objects: newObjects },
-          future: [],
-        },
-      };
-    });
-  },
-
-  removeObject: (uuid) => {
-    set((state) => {
-      const newObjects = { ...state.history.present.objects };
-      if (Array.isArray(uuid)) {
-        uuid.forEach((id) => delete newObjects[id]);
-      } else {
-        delete newObjects[uuid];
-      }
-      const newSelectedUUID =
-        state.history.present.selectedUUID[0] === uuid
-          ? []
-          : state.history.present.selectedUUID;
-
-      return {
-        history: {
-          past: [...state.history.past, state.history.present],
-          present: {
-            ...state.history.present,
-            objects: newObjects,
-            selectedUUID: newSelectedUUID,
-          },
-          future: [],
-        },
-      };
-    });
-  },
-
-  // 예시: 위치, 회전, 크기 업데이트
-  updateObject: (uuid, position, rotation, scale) => {
-    set((state) => {
-      const targetObject = state.history.present.objects[uuid];
-      if (!targetObject) return state;
-
-      const updatedObject = targetObject.clone();
-      updatedObject.position.copy(position);
-      updatedObject.rotation.copy(rotation);
-      updatedObject.scale.copy(scale);
-
-      const newObjects = {
-        ...state.history.present.objects,
-        [uuid]: updatedObject,
-      };
-
-      return {
-        history: {
-          past: [...state.history.past, state.history.present],
-          present: { ...state.history.present, objects: newObjects },
-          future: [],
-        },
-      };
-    });
+  setScene: (scene: THREE.Scene) => {
+    set(
+      produce((draft) => {
+        draft.history.past.push(draft.history.present);
+        draft.history.future = [];
+        draft.history.present.scene = scene;
+        // 씬이 변경되면 모든 상태 초기화
+        draft.history.present.selectedUUID = null;
+        draft.history.present.animations = [];
+        draft.history.present.mixer = null;
+        draft.history.present.currentTime = 0;
+        draft.history.present.keyframes = {};
+      })
+    );
   },
 
   selectObject: (uuid) => {
-    set((state) => {
-      // If uuid is null, clear selection
-      if (uuid === null) {
-        if (state.history.present.selectedUUID.length === 0) return state;
-        return {
-          history: {
-            past: [...state.history.past, state.history.present],
-            present: { ...state.history.present, selectedUUID: [] },
-            future: [],
-          },
-        };
-      }
+    const currentUUID = get().history.present.selectedUUID;
+    if (currentUUID === uuid) return;
 
-      // If uuid is an array, set selection to that array
-      if (Array.isArray(uuid)) {
-        if (
-          state.history.present.selectedUUID.length === uuid.length &&
-          state.history.present.selectedUUID.every((id, i) => id === uuid[i])
-        ) {
-          return state;
-        }
-        return {
-          history: {
-            past: [...state.history.past, state.history.present],
-            present: { ...state.history.present, selectedUUID: uuid },
-            future: [],
-          },
-        };
-      }
-
-      // Otherwise, set selection to single uuid
-      if (
-        state.history.present.selectedUUID.length === 1 &&
-        state.history.present.selectedUUID[0] === uuid
-      ) {
-        return state;
-      }
-      return {
-        history: {
-          past: [...state.history.past, state.history.present],
-          present: { ...state.history.present, selectedUUID: [uuid] },
-          future: [],
-        },
-      };
-    });
+    console.log("Selecting object:", uuid);
+    set(
+      produce((draft) => {
+        // 선택 변경은 히스토리에 기록하지 않음 (단순 UI 상태)
+        draft.history.present.selectedUUID = uuid;
+      })
+    );
   },
-
   // --- 히스토리 제어 액션들 ---
 
   undo: () => {

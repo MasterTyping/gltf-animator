@@ -1,4 +1,6 @@
 import { useLoader } from "@react-three/fiber";
+import type { Loader } from "three";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
@@ -41,8 +43,15 @@ export function useResourceLoader(url: string) {
     throw new Error(`지원하지 않는 파일 형식입니다: ${extension || pureUrl}`);
   }
 
-  const data = useLoader(loader, pureUrl, (loader) => {});
+  const data = useLoader(loader, pureUrl, dracoExtension, (loader) => {});
   data.scene.userData.url = url; // 모델에 URL 정보 추가
   const { animations, scene, materials } = data;
   return { animations, model: scene, materials };
+}
+
+function dracoExtension(loader: Loader) {
+  if (!(loader instanceof GLTFLoader)) return;
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath("/draco/gltf/");
+  loader.setDRACOLoader(dracoLoader);
 }

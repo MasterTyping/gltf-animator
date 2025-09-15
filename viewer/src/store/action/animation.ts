@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { produce } from "immer";
 
 // 애니메이션 액션 인터페이스
 export interface AnimationActions {
@@ -14,19 +15,21 @@ export const createAnimationActions = (
   get: any
 ): AnimationActions => ({
   setAnimations: (uuid: string, clips: THREE.AnimationClip[]) => {
-    set((state: any) => ({
-      history: {
-        past: [...state.history.past, state.history.present],
-        present: {
-          ...state.history.present,
-          animations: {
-            ...state.history.present.animations,
-            [uuid]: { clips, currentClip: 0, isPlaying: false, time: 0 },
+    set(
+      produce((draft: any) => ({
+        history: {
+          past: [...draft.history.past, draft.history.present],
+          present: {
+            ...draft.history.present,
+            animations: {
+              ...draft.history.present.animations,
+              [uuid]: { clips, currentClip: 0, isPlaying: false, time: 0 },
+            },
           },
+          future: [],
         },
-        future: [],
-      },
-    }));
+      }))
+    );
   },
 
   playAnimation: (uuid: string, clipIndex: number) => {
