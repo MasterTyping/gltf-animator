@@ -19,8 +19,12 @@ export function useResourceLoader(url: string) {
   // blob URL 처리: 확장자를 fileUrl에서 추출
   let extension = "";
   let pureUrl = url;
+  if (url === undefined || url.length === 0) {
+    console.error("URL이 제공되지 않았습니다.");
+    return { animations: [], model: null, materials: null };
+  }
   if (url.startsWith("blob:")) {
-    const [blobPart, query] = url.split("?");
+    const [blobPart] = url.split("?");
     pureUrl = blobPart; // 쿼리스트링 제거
     const nameMatch = url.match(/name=([^&]+)/);
     if (nameMatch) {
@@ -38,7 +42,7 @@ export function useResourceLoader(url: string) {
   }
 
   const data = useLoader(loader, pureUrl, (loader) => {});
-
+  data.scene.userData.url = url; // 모델에 URL 정보 추가
   const { animations, scene, materials } = data;
   return { animations, model: scene, materials };
 }

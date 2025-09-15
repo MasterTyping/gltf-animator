@@ -123,7 +123,7 @@ export default function Inspector() {
                 <TextField
                   key={i}
                   label={`${["rx", "ry", "rz"][i]}`}
-                  value={v.toFixed(2)}
+                  value={typeof v === "number" ? v.toFixed(2) : "0.00"}
                   size="small"
                   variant="filled"
                   sx={{
@@ -140,7 +140,7 @@ export default function Inspector() {
                   onChange={(e) => {
                     const newValue = parseFloat(e.target.value);
                     if (!isNaN(newValue)) {
-                      object.rotation.setComponent(i, newValue);
+                      object.rotation[i] = newValue;
                     }
                   }}
                 />

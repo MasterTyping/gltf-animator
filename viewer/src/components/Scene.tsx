@@ -21,6 +21,7 @@ export default function Scene({ fileUrlMap, name = "root" }: SceneProps) {
 
   useEffect(() => {
     if (scene) {
+      console.log(fileUrlMap);
       setScene(scene);
     }
   }, [scene]);

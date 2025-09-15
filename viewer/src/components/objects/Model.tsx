@@ -24,17 +24,12 @@ export default function Model({ url }: ModelProps) {
   // 메모이제이션으로 불필요한 리렌더링 방지
   const memoizedModel = useMemo(() => model, [model?.uuid]); // 모델 UUID로 메모이제이션
 
-  useEffect(() => {
-    if (memoizedModel && animations) {
-      memoizedModel.animations = animations; // 메모이제이션된 모델에만 적용
-    }
-  }, [memoizedModel, animations]);
-
   // useEffect(() => {
   //   if (mixer && clips.length > 0) {
   //     const current = 0;
   //     const action = mixer.clipAction(clips[current]);
   //     // action.setLoop(LoopRepeat, 1); // 루프 제한으로 성능 최적화
+  //     console.log(mixer, action);
   //     action.play();
   //   }
   // }, [mixer, clips]); // 의존성 최소화

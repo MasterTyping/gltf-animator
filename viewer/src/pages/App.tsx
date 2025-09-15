@@ -162,7 +162,7 @@ export default function HomePage() {
             >
               <OrthographicCamera
                 makeDefault
-                up={[0, 0, 1]}
+                up={[0, 1, 0]}
                 zoom={0.3}
                 position={[0, 0, 30000]}
                 near={0.01}
