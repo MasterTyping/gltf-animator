@@ -21,7 +21,7 @@ export default function Scene({ fileUrlMap, name = "root" }: SceneProps) {
 
   useEffect(() => {
     if (scene) {
-      console.log(fileUrlMap);
+      console.log("Scene loaded:", scene);
       setScene(scene);
     }
   }, [scene]);
@@ -30,8 +30,8 @@ export default function Scene({ fileUrlMap, name = "root" }: SceneProps) {
     <>
       <ambientLight intensity={1.5} />
       <directionalLight position={[10, 10, 5]} intensity={2.5} />
-      <PivotManager />
-      {fileUrlMap.size &&
+
+      {fileUrlMap.size > 0 &&
         [...fileUrlMap.entries()].map(([id, url]) => (
           <Model key={id} url={url} />
         ))}

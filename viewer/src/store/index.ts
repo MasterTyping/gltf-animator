@@ -16,7 +16,7 @@ export interface KeyFrame {
 export interface SceneState {
   objects: { [uuid: string]: THREE.Object3D }; // UUID를 키로 객체를 저장하여 검색 성능 향상
   selectedUUID: string[];
-  root?: THREE.Scene;
+  root: THREE.Scene | null;
   animation?: {
     [uuid: string]: {
       clips: THREE.AnimationClip[];
@@ -48,6 +48,13 @@ interface StoreState {
   // 액션: 씬의 상태를 변경하는 모든 동작들
   setScene: (gltfScene: THREE.Scene) => void;
   selectObject: (uuid: string[] | string | null) => void;
+  updateObject: (
+    uuid: string,
+    position?: [number, number, number] | THREE.Vector3,
+    rotation?: [number, number, number] | THREE.Euler,
+    scale?: [number, number, number] | THREE.Vector3
+  ) => void;
+  // 애니메이션 관련 액션들
   // 히스토리 제어 액션
   undo: () => void;
   redo: () => void;
@@ -58,6 +65,7 @@ interface StoreState {
 const initialState: History = {
   past: [],
   present: {
+    root: null,
     objects: {},
     selectedUUID: [],
     animation: {},
@@ -77,6 +85,11 @@ export const useSceneStore = create<StoreState>((set, get) => ({
   setScene: (scene: THREE.Scene) => {
     set(
       produce((draft) => {
+        console.log(
+          "Setting new scene in store:",
+          scene,
+          draft.history.present
+        );
         draft.history.past.push(draft.history.present);
         draft.history.future = [];
         draft.history.present.scene = scene;
@@ -86,19 +99,41 @@ export const useSceneStore = create<StoreState>((set, get) => ({
         draft.history.present.mixer = null;
         draft.history.present.currentTime = 0;
         draft.history.present.keyframes = {};
+        draft.history.present.objects = {};
+        scene.traverse((obj) => {
+          draft.history.present.objects[obj.uuid] = obj;
+        });
       })
     );
   },
 
   selectObject: (uuid) => {
+    if (!uuid || (Array.isArray(uuid) && uuid.length === 0)) {
+      console.warn("Invalid UUID passed to selectObject:", uuid);
+      return;
+    }
+
     const currentUUID = get().history.present.selectedUUID;
     if (currentUUID === uuid) return;
 
-    console.log("Selecting object:", uuid);
     set(
       produce((draft) => {
-        // 선택 변경은 히스토리에 기록하지 않음 (단순 UI 상태)
-        draft.history.present.selectedUUID = uuid;
+        draft.history.present.selectedUUID = Array.isArray(uuid)
+          ? uuid
+          : [uuid];
+      })
+    );
+  },
+
+  updateObject: (uuid, position, rotation, scale) => {
+    set(
+      produce((draft) => {
+        const obj = draft.history.present.objects[uuid];
+        if (obj) {
+          if (position) obj.position.set(...position);
+          if (rotation) obj.rotation.set(...rotation);
+          if (scale) obj.scale.set(...scale);
+        }
       })
     );
   },

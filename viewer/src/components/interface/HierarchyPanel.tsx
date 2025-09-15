@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useSceneStore } from "../../store";
 
 import FolderIcon from "@mui/icons-material/Folder";
@@ -82,6 +82,7 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
               <FolderIcon fontSize="small" />
             ) : object.type === "Object3D" ||
               object.type === "Mesh" ||
+              object.type === "SkinnedMesh" ||
               object.type.includes("Geometry") ? (
               <CubeIcon fontSize="small" />
             ) : object.type.includes("Light") ? (
@@ -90,6 +91,8 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
               <VideocamIcon fontSize="small" />
             ) : object.type.includes("Material") ? (
               <ColorLensIcon fontSize="small" />
+            ) : object.type === "Bone" ? (
+              <QuestionMarkIcon fontSize="small" />
             ) : (
               <QuestionMarkIcon fontSize="small" />
             )}
@@ -120,16 +123,15 @@ const HierarchyNode: React.FC<HierarchyNodeProps> = ({
 };
 
 export const HierarchyPanel: React.FC = () => {
-  const root = useSceneStore((s) => s.history.present.root);
+  const root = useSceneStore((s) => s.history.present.scene);
   const selectObject = useSceneStore((s) => s.selectObject);
 
+  useEffect(() => {
+    console.log("HierarchyPanel root scene updated:", root);
+  }, [root]);
+
   return (
-    <Drawer
-      anchor="left"
-      open={!!root}
-      variant="persistent"
-      PaperProps={{ sx: { width: 320, maxWidth: "100vw", p: 1 } }}
-    >
+    <Drawer anchor="left" open={!!root} variant="persistent">
       {!root ? (
         <Paper sx={{ p: 2 }}>
           <Typography variant="subtitle1" color="text.secondary">

@@ -52,9 +52,14 @@ export default function Inspector() {
     );
   }
 
-  const object = objects[selectedUUID[0]] as THREE.Object3D | undefined;
+  const object = objects[selectedUUID[0]];
 
   if (!object) {
+    console.log(
+      "Selected object not found in store:",
+      selectedUUID[0],
+      objects
+    );
     return (
       <div style={drawerStyle}>
         <div style={{ color: "#b3b8c3", fontSize: 16 }}>

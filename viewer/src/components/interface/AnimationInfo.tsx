@@ -21,6 +21,7 @@ const AnimationInfo: React.FC<AnimationInfoProps> = ({ selectedObject }) => {
   const [animationInfo, setAnimationInfo] = useState<AnimationData[]>([]);
   const mixerRef = useRef<AnimationMixer | null>(null); // mixer ref
   const animationFrameIdRef = useRef<number>(0); // animationFrameId ref
+  const [activeAnimation, setActiveAnimation] = useState<string | null>(null); // 현재 재생 중인 애니메이션 이름
 
   useEffect(() => {
     if (selectedObject) {
@@ -54,48 +55,56 @@ const AnimationInfo: React.FC<AnimationInfoProps> = ({ selectedObject }) => {
     };
   }, [selectedObject, animations]);
 
-  useEffect(() => {
-    // 렌더링 루프
-    let previousTime = 0;
-    const tick = (currentTime: number) => {
-      const deltaTime = (currentTime - previousTime) / 1000; // seconds
-      previousTime = currentTime;
-      if (mixerRef.current) {
-        mixerRef.current.update(deltaTime);
-      }
-      animationFrameIdRef.current = requestAnimationFrame(tick);
-    };
-    animationFrameIdRef.current = requestAnimationFrame(tick); // 렌더링 시작
-    return () => {
+  const playAnimation = (clip: AnimationClip) => {
+    if (mixerRef.current) {
+      const action = mixerRef.current.clipAction(clip);
+      action.reset().play();
+      setActiveAnimation(clip.name);
+
+      const animate = () => {
+        mixerRef.current?.update(0.016); // 약 60fps 기준
+        animationFrameIdRef.current = requestAnimationFrame(animate);
+      };
+      animate();
+    }
+  };
+
+  const stopAnimation = () => {
+    if (mixerRef.current) {
+      mixerRef.current.stopAllAction();
       cancelAnimationFrame(animationFrameIdRef.current);
-    };
-  }, []);
+      setActiveAnimation(null);
+    }
+  };
 
   return (
     <div>
       <Typography variant="h6">Animation Info</Typography>
       {selectedObject ? (
-        <List>
+        <List
+          dense
+          sx={{
+            maxHeight: 200,
+            overflowY: "auto",
+            "&::-webkit-scrollbar": {
+              display: "none", // 웹킷 기반 브라우저에서 스크롤바 숨기기
+            },
+          }}
+        >
           {animationInfo.map((a) => (
             <ListItemButton
               sx={{ userSelect: "none" }}
               key={a.name}
-              onClick={() => {
-                if (mixerRef.current) {
-                  console.log(a.clip);
-                  const action = mixerRef.current.clipAction(a.clip);
-                  action.reset().play(); // 액션 초기화 및 재생
-                  action.enabled = true; // 액션 활성화
-                  console.log(mixerRef.current, a.clip);
-                } else {
-                  console.warn("Mixer is not initialized.");
-                }
-              }}
+              onClick={() =>
+                activeAnimation === a.name
+                  ? stopAnimation()
+                  : playAnimation(a.clip)
+              }
             >
               <ListItemText
                 primary={`${a.name} - Duration: ${a.duration.toFixed(2)}s`}
               />
-              {a.name ? <PlayArrowIcon /> : <StopIcon />}
+              {activeAnimation === a.name ? <StopIcon /> : <PlayArrowIcon />}
             </ListItemButton>
           ))}
         </List>
